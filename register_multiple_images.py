@@ -1,5 +1,5 @@
 from load_images_to_tensor import load_grayscale_from_folder
-from registration import registration
+from registration import rigid_registration
 import pandas as pd
 import numpy as np
 import os
@@ -10,7 +10,7 @@ def register_multiple_images(path_to_reference, path_to_sample):
     ref = load_grayscale_from_folder(path_to_reference)
     sample = load_grayscale_from_folder(path_to_sample)
     print("Images loaded")
-    return registration(ref, sample, verbose=True)
+    return rigid_registration(ref, sample, verbose=True)
 
 
 def make_csv_from_reg_dict(registration_dict, output_path):

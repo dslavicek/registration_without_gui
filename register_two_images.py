@@ -1,5 +1,5 @@
 from load_images_to_tensor import load_grayscale
-from registration import registration
+from registration import rigid_registration
 
 
 def register_two_images(path_to_reference, path_to_sample):
@@ -7,4 +7,4 @@ def register_two_images(path_to_reference, path_to_sample):
     ref = load_grayscale(path_to_reference)
     sample = load_grayscale(path_to_sample)
     print("Images loaded")
-    return registration(ref, sample, verbose=True)
+    return rigid_registration(ref, sample, verbose=True)

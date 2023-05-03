@@ -1,4 +1,4 @@
-from registration import registration
+from registration import rigid_registration, affine_registration
 from SampleCreator import SampleCreator
 import input_output
 import pandas as pd
@@ -52,10 +52,10 @@ rs_ref = rs
 print(f"GS shape: {rs.shape}")
 # rgb_ref = rf.repeat(torch.Size([sc_rgb.batch_size, 1, 1, 1]))
 
-reg_res_rgb = registration(rgb_ref, rgb_transf, verbose=True)
-reg_res_gf = registration(gf_ref, gf_transf, verbose=True)
-reg_res_gs = registration(gs_ref, gs_transf, verbose=True)
-reg_res_rs = registration(rs_ref, rs_transf, verbose=True)
+reg_res_rgb = affine_registration(rgb_ref, rgb_transf, verbose=True)
+reg_res_gf = affine_registration(gf_ref, gf_transf, verbose=True)
+reg_res_gs = affine_registration(gs_ref, gs_transf, verbose=True)
+reg_res_rs = affine_registration(rs_ref, rs_transf, verbose=True)
 
 
 input_output.display_nth_image_from_tensor(rgb_ref)
@@ -71,11 +71,4 @@ input_output.display_nth_image_from_tensor(rs_transf)
 input_output.display_nth_image_from_tensor(reg_res_rs["registered_tens"])
 
 
-def make_csv_from_reg_dict(registration_dict, output_path):
-    x = registration_dict["x_shifts"]
-    y = registration_dict["y_shifts"]
-    angle = registration_dict["angles_rad"] * 180 / np.pi
-    data = np.stack((x, y, angle), axis=1)
-    data = np.transpose(data)
-    result = pd.DataFrame(data)
-    result.to_csv(output_path, header=["x shift", "y shift", "angle deg"], index=False)
+

@@ -3,6 +3,8 @@ import skimage.io
 import torch
 import matplotlib.pyplot as plt
 import logging
+import numpy as np
+import pandas as pd
 
 def from_folder_to_tensor(path, datatype=torch.float32):
     # get nuber of file, dimensions and prepare empty output tensor
@@ -73,3 +75,12 @@ def display_nth_image_from_tensor(tensor, n=0):
     plt.imshow(tensor_image)
     plt.show()
     return 0
+
+def make_csv_from_reg_dict(registration_dict, output_path):
+    x = registration_dict["x_shifts"]
+    y = registration_dict["y_shifts"]
+    angle = registration_dict["angles_rad"] * 180 / np.pi
+    data = np.stack((x, y, angle), axis=1)
+    data = np.transpose(data)
+    result = pd.DataFrame(data)
+    result.to_csv(output_path, header=["x shift", "y shift", "angle deg"], index=False)
