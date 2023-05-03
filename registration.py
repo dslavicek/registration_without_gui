@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 
 
-def grayscale_registration(ref, sample, max_iters=120, mu=0.02, datatype=torch.float32, verbose=False):
+def registration(ref, sample, max_iters=120, mu=0.02, datatype=torch.float32, verbose=False):
     # this function performs registration of two 4D pytorch tensors
     # inputs - reference tensor, tensor of moving images, max. number of iterations, size of registration step,
     # datatype, verbose mode
@@ -12,6 +12,8 @@ def grayscale_registration(ref, sample, max_iters=120, mu=0.02, datatype=torch.f
         print("Begining registration")
     if ref.shape != sample.shape:
         print("ERROR: reference tensor and sample tensor must have same dimensions")
+        print("refrerence dimensions: " + str(ref.shape))
+        print("sample dimensions: " + str(sample.shape))
         return 1
 
     batch_size = ref.shape[0]
@@ -48,8 +50,7 @@ def grayscale_registration(ref, sample, max_iters=120, mu=0.02, datatype=torch.f
         # transform mask
         with torch.no_grad():
             mask_out = F.grid_sample(mask, grid, padding_mode="zeros")
-            print(mask)
-            print(mask_out)
+            # print(mask == mask_out)
         # calculate loss function
         diff = (registered_tens - ref) ** 2
         diff = diff * mask
