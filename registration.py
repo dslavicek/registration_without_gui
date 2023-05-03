@@ -97,9 +97,6 @@ def affine_registration(ref, sample, max_iters=120, mu=0.02, datatype=torch.floa
 
     mask = torch.ones(sample.shape, dtype=datatype)
 
-    t_mat = torch.tensor([[[1, 0, 0], [0, 1, 0]]], dtype=datatype)
-    t_mat = t_mat.repeat((batch_size, 1, 1))
-
     x_shift = torch.zeros(batch_size, dtype=datatype, requires_grad=True)
     y_shift = torch.zeros(batch_size, dtype=datatype, requires_grad=True)
     angle_rad = torch.zeros(batch_size, dtype=datatype, requires_grad=True)
@@ -109,7 +106,7 @@ def affine_registration(ref, sample, max_iters=120, mu=0.02, datatype=torch.floa
 
     shear = torch.zeros(batch_size, dtype=datatype, requires_grad=True)
 
-    optimizer = torch.optim.Adam([x_shift, y_shift, angle_rad], lr=mu)
+    optimizer = torch.optim.Adam([x_shift, y_shift, angle_rad, x_scale, y_scale, shear], lr=mu)
     losses = []
     for i in range(max_iters):
         if verbose and (i == 0 or i % 5 == 4 or i == max_iters - 1):
@@ -122,22 +119,13 @@ def affine_registration(ref, sample, max_iters=120, mu=0.02, datatype=torch.floa
         t_mat = T @ R @ S @ SH
         t_mat = t_mat[:, 0:2, :]
 
-        # t_mat = torch.tensor([[[1, 0, 0], [0, 1, 0]]], dtype=datatype)
-        # t_mat = t_mat.repeat((batch_size, 1, 1))
-        # t_mat[:, 0, 2] = x_shift
-        # t_mat[:, 1, 2] = y_shift
-        # t_mat[:, 0, 0] = torch.cos(angle_rad)
-        # t_mat[:, 0, 1] = -torch.sin(angle_rad)
-        # t_mat[:, 1, 0] = torch.sin(angle_rad)
-        # t_mat[:, 1, 1] = torch.cos(angle_rad)
 
         # transform image
         grid = F.affine_grid(t_mat, sample.shape)
         registered_tens = F.grid_sample(sample, grid, padding_mode="zeros")
         # transform mask
         with torch.no_grad():
-            mask_out = F.grid_sample(mask, grid, padding_mode="zeros")
-            # print(mask == mask_out)
+            mask = F.grid_sample(mask, grid, padding_mode="zeros")
         # calculate loss function
         diff = (registered_tens - ref) ** 2
         diff = diff * mask
