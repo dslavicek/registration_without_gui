@@ -53,6 +53,9 @@ print(f"GS shape: {rs.shape}")
 # rgb_ref = rf.repeat(torch.Size([sc_rgb.batch_size, 1, 1, 1]))
 
 reg_res_rgb = affine_registration(rgb_ref, rgb_transf, verbose=True)
+
+print(reg_res_rgb["transformation_matrices"])
+print(reg_res_rgb["transformation_matrices"].shape)
 reg_res_gf = affine_registration(gf_ref, gf_transf, verbose=True)
 reg_res_gs = affine_registration(gs_ref, gs_transf, verbose=True)
 reg_res_rs = affine_registration(rs_ref, rs_transf, verbose=True)

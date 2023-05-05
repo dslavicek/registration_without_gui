@@ -152,6 +152,7 @@ def rescale_images(images, factor):
     return torch.tensor(output)
 
 
+# NOT DIFFERENTIABLE
 def mutual_information(images1, images2, mask):
     BINS = 32
     batch_size = images1.shape[0]
@@ -160,15 +161,13 @@ def mutual_information(images1, images2, mask):
     joint_hist = []
     mi = torch.zeros(batch_size)
     for i in range(batch_size):
-        hist1.append(torch.histogram(images1[i], BINS, range=(0.0, 1.0), density=True))
-        hist2.append(torch.histogram(images2[i], BINS, range=(0.0, 1.0), density=True))
+        hist1 = torch.histogram(images1[i], BINS, range=(0.0, 1.0), density=True)
+        hist2 = torch.histogram(images2[i], BINS, range=(0.0, 1.0), density=True)
         joint = torch.stack([images1[i].reshape([-1]), images2[i].reshape([-1])], 1)
-        joint_hist.append(torch.histogramdd(joint, range=[0., 1., 0., 1.], bins=[BINS, BINS], density=True))
-        h_a = -torch.sum(hist1[-1] * torch.log2(hist1[-1]))  # entropy of the first image
-        h_b = -torch.sum(hist2[-1] * torch.log2(hist2[-1]))  # entropy of the second image
-        h_ab = -torch.sum(joint_hist[-1] * torch.log2(joint_hist[-1]))  # joint entropy
+        joint_hist = torch.histogramdd(joint, range=[0., 1., 0., 1.], bins=[BINS, BINS], density=True)
+        h_a = -torch.sum(hist1 * torch.log2(hist1))  # entropy of the first image
+        h_b = -torch.sum(hist2 * torch.log2(hist2))  # entropy of the second image
+        h_ab = -torch.sum(joint_hist * torch.log2(joint_hist))  # joint entropy
         mi[i] = h_a + h_b - h_ab  # mutual information
 
-    return torch.tensor(mi).mean()
-
-    pass
+    return mi.mean()
