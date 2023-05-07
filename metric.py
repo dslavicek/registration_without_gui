@@ -2,7 +2,8 @@ import torch
 import logging
 
 
-def points_distance_metric(t_mat1, t_mat2, points=None):
+# target registration error
+def tre(t_mat1, t_mat2, points=None):
     # t_mat1, t_mat2 are tensors of transformation matrices with size B x 3 x 3 or B x 2 x 3, where B is batch size
     if t_mat1.shape[0] != t_mat2.shape[0]:
         logging.error("Input dimensions do not match")
@@ -10,7 +11,6 @@ def points_distance_metric(t_mat1, t_mat2, points=None):
     batch_size = t_mat1.shape[0]
 
     if points is None:
-        # points = torch.tensor([[[-0.5, -0.5, 0.5, 0.5], [-0.5, 0.5, -0.5, 0.5], [1, 1, 1, 1]]])
         points = torch.tensor([[[0.5, 0.5, 1], [0.5, -0.5, 1], [-0.5, 0.5, 1], [-0.5, -0.5, 1]]])
         points = points.repeat([batch_size, 1, 1])
 
@@ -31,16 +31,16 @@ def points_distance_metric(t_mat1, t_mat2, points=None):
     t_points2 = t_points2[:, :, 0:2]
 
     diff = t_points2 - t_points1
-    diff_sq = diff**2
+    diff_sq = diff ** 2
 
+    euc_dist = torch.sqrt(diff_sq.sum(dim=2))
+    euc_dist_avg = euc_dist.mean(dim=1)
 
-    print(t_points1)
-    print(t_points2)
+    return euc_dist_avg
 
-    # print(points[0] @ t_mat2[0].T)
+# test
+# t_m1 = torch.tensor([[[1, 0, 0.0], [0, 1, 0.0]], [[1, 0, 0.0], [0, 1, 0.0]]])
+# t_m2 = torch.tensor([[[1, 0, 0.1], [0, 1, 0.1]], [[1, 0, 0.0], [0, 1, 0.0]]])
 
-
-t_m1 = torch.tensor([[[1, 0, 0.0], [0, 1, 0.0]]])
-t_m2 = torch.tensor([[[1, 0, 0.1], [0, 1, 0.0]]])
-
-points_distance_metric(t_m1, t_m2)
+# pdm = tre(t_m1, t_m2)
+# print(pdm)
