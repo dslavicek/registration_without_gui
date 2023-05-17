@@ -5,12 +5,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def pyramid_registration(ref, sample, max_iters=50, mu=0.02, pyramid_level=3, datatype=torch.float32, verbose=False):
+def pyramid_registration(ref, sample, max_iters=30, mu=0.02, scale_factors=None, datatype=torch.float32, verbose=False):
     # this function performs registration of two 4D pytorch tensors
     # inputs - reference tensor, tensor of moving images, max. number of iterations, size of registration step,
     # datatype, verbose mode
     # output - dictionary containing tensor of registered images, shifts in x,y, rotations, transformation matrices,
     # loss function
+    if scale_factors is None:
+        scale_factors = [0.125, 0.25, 0.5, 1]
     if verbose:
         print("Begining registration")
     if ref.shape != sample.shape:
@@ -20,8 +22,8 @@ def pyramid_registration(ref, sample, max_iters=50, mu=0.02, pyramid_level=3, da
         return 1
 
     batch_size = ref.shape[0]
-    # height = ref.shape[2]
-    # width = ref.shape[3]
+    height = ref.shape[2]
+    width = ref.shape[3]
     # registered_tens = None
 
     x_shift = torch.zeros(batch_size, dtype=datatype, requires_grad=True)
@@ -33,20 +35,19 @@ def pyramid_registration(ref, sample, max_iters=50, mu=0.02, pyramid_level=3, da
 
     shear = torch.zeros(batch_size, dtype=datatype, requires_grad=True)
     optimizer = torch.optim.Adam([x_shift, y_shift, angle_rad], lr=mu)
-    scale_factors = [0.25, 0.5, 1]
+
     for sf in scale_factors:
         ref_rescaled = rescale_images(ref, sf)
         sample_rescaled = rescale_images(sample, sf)
         mask = torch.ones(sample_rescaled.shape, dtype=datatype)
-
+        print(f"Scale factor: {sf}")
         losses = []
-
         for i in range(max_iters):
             T = translation_mat(x_shift, y_shift, datatype)
             R = rotation_mat(angle_rad, datatype)
             S = scale_mat(x_scale, y_scale, datatype)
             SH = shear_mat(shear, datatype)
-            t_mat = T @ R @ S @ SH
+            t_mat = T @ R @ S @ SH # TRANSPONOVAT
             t_mat = t_mat[:, 0:2, :]
             grid = F.affine_grid(t_mat, sample_rescaled.shape)
             registered_tens = F.grid_sample(sample_rescaled, grid, padding_mode="zeros")
@@ -63,8 +64,9 @@ def pyramid_registration(ref, sample, max_iters=50, mu=0.02, pyramid_level=3, da
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        plt.plot(losses)
-        plt.show()
+        if verbose:
+            plt.plot(losses)
+            plt.show()
 
     if verbose:
         print("Registration complete.")
@@ -79,37 +81,6 @@ def pyramid_registration(ref, sample, max_iters=50, mu=0.02, pyramid_level=3, da
         "transformation_matrices": t_mat.detach()
     }
     return output_dict
-
-
-def one_level_registration(reference, sample, x_shift, y_shift, x_scale, y_scale, angle_rad, shear):
-    losses = []
-    for i in range(max_iters):
-        if verbose and (i == 0 or i % 5 == 4 or i == max_iters - 1):
-            print("iteration", i + 1, " out of ", max_iters)
-        # prepare transformation matrix
-        T = translation_mat(x_shift, y_shift, datatype)
-        R = rotation_mat(angle_rad, datatype)
-        S = scale_mat(x_scale, y_scale, datatype)
-        SH = shear_mat(shear, datatype)
-        t_mat = T @ R @ S @ SH
-        t_mat = t_mat[:, 0:2, :]
-
-        # transform image
-        grid = F.affine_grid(t_mat, sample.shape)
-        registered_tens = F.grid_sample(sample, grid, padding_mode="zeros")
-        # transform mask
-        with torch.no_grad():
-            mask = F.grid_sample(mask, grid, padding_mode="zeros")
-        # calculate loss function
-        diff = (registered_tens - ref) ** 2
-        diff = diff * mask
-        loss = diff.mean()
-
-        losses.append(loss.detach().cpu().numpy())
-        # adjust transformation parameters
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
 
 
 def translation_mat(x_shift, y_shift, datatype):
