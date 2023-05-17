@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def pyramid_registration(ref, sample, max_iters=30, mu=0.02, scale_factors=None, datatype=torch.float32, verbose=False):
+def pyramid_registration(ref, sample, max_iters=30, mu=0.02, scale_factors=None, datatype=torch.float32, verbose=False,
+                         enable_translation=True, enable_rotation=True, enable_scaling=True, enable_shear=True):
     # this function performs registration of two 4D pytorch tensors
     # inputs - reference tensor, tensor of moving images, max. number of iterations, size of registration step,
     # datatype, verbose mode
@@ -43,11 +44,21 @@ def pyramid_registration(ref, sample, max_iters=30, mu=0.02, scale_factors=None,
         print(f"Scale factor: {sf}")
         losses = []
         for i in range(max_iters):
+            I = torch.eye(3).repeat((batch_size, 1, 1))
             T = translation_mat(x_shift, y_shift, datatype)
             R = rotation_mat(angle_rad, datatype)
             S = scale_mat(x_scale, y_scale, datatype)
             SH = shear_mat(shear, datatype)
-            t_mat = T @ R @ S @ SH # TRANSPONOVAT
+            # t_mat = T @ R @ S @ SH
+            t_mat = I
+            if enable_translation:
+                t_mat = t_mat @ T
+            if enable_rotation:
+                t_mat = t_mat @ R
+            if enable_scaling:
+                t_mat = t_mat @ S
+            if enable_shear:
+                t_mat = t_mat @ SH
             t_mat = t_mat[:, 0:2, :]
             grid = F.affine_grid(t_mat, sample_rescaled.shape)
             registered_tens = F.grid_sample(sample_rescaled, grid, padding_mode="zeros")
@@ -121,6 +132,7 @@ def rescale_images(images, factor):
     for i in range(images.shape[0]):
         output.append(rescale(np.array(images[i, :, :, :]), factor))
     return torch.tensor(output)
+
 
 
 # NOT DIFFERENTIABLE
