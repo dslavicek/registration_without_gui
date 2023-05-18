@@ -6,10 +6,13 @@ import logging
 import numpy as np
 import pandas as pd
 
-def from_folder_to_tensor(path, datatype=torch.float32):
+
+def from_folder_to_tensor(path, datatype=torch.float32, n=-1):
     # get nuber of file, dimensions and prepare empty output tensor
     logging.debug("executing function from_folder_to_tensor")
     all_files = os.listdir(path)
+    if n > 0:
+        all_files = all_files[0:n]
     batch_size = len(all_files)
     im = skimage.io.imread(os.path.join(path, all_files[0]))
     height = im.shape[0]
@@ -75,6 +78,7 @@ def display_nth_image_from_tensor(tensor, n=0):
     plt.imshow(tensor_image)
     plt.show()
     return 0
+
 
 def make_csv_from_reg_dict(registration_dict, output_path):
     x = registration_dict["x_shifts"]

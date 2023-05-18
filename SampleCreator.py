@@ -1,23 +1,24 @@
 import torch
-# import load_images_to_tensor as lit
 import torch.nn.functional as F
 import numpy as np
 from pyramid_registration import translation_mat, scale_mat, shear_mat, rotation_mat
 import input_output
+
 
 # class for generating synthetic samples for registration
 class SampleCreator:
     def __init__(self, input_images, verbose=False, from_path=True):
         self.verbose = verbose
         self.datatype = torch.float32
-        self.x_shifts = [-0.1, 0, 1]
-        self.y_shifts = [-0.1, 0, 1]
-        self.rotations_deg = [-1, 0, 1]
-        self.x_scales = [1, 1, 1]
-        self.y_scales = [1, 1, 1]
-        self.shears = [0, 0, 0]
+        self.x_shifts = None
+        self.y_shifts = None
+        self.rotations_deg = None
+        self.x_scales = None
+        self.y_scales = None
+        self.x_shears = None
+        self.y_shears = None
+        self.used_device = 'cpu'
         if from_path:
-            # self.input_tensor = lit.load_grayscale_from_folder(input_images)
             self.input_tensor = input_output.from_folder_to_tensor(input_images)
         else:
             self.input_tensor = input_images
@@ -26,6 +27,7 @@ class SampleCreator:
         self.width = self.input_tensor.shape[3]
         self.output = None
         self.transf_matrices = None
+        self.clear_transf_params()
         if verbose:
             print("Object of class SampleCreator created. Batch size: " + str(self.batch_size) + ", height: " +
                   str(self.height) + ", width:" + str(self.width))
@@ -58,12 +60,13 @@ class SampleCreator:
         angle_rad_tens = torch.tensor(self.rotations_deg, dtype=self.datatype) / 180 * torch.pi
         x_scale_tens = torch.tensor(self.x_scales, dtype=self.datatype)
         y_scale_tens = torch.tensor(self.y_scales, dtype=self.datatype)
-        shear_tens = torch.tensor(self.shears, dtype=self.datatype)
+        x_shear_tens = torch.tensor(self.x_shears, dtype=self.datatype)
+        y_shear_tens = torch.tensor(self.y_shears, dtype=self.datatype)
 
-        T = translation_mat(x_shift_tens, y_shift_tens, self.datatype)
-        R = rotation_mat(angle_rad_tens, self.datatype)
-        S = scale_mat(x_scale_tens, y_scale_tens, self.datatype)
-        SH = shear_mat(shear_tens, self.datatype)
+        T = translation_mat(x_shift_tens, y_shift_tens, self.datatype, self.used_device)
+        R = rotation_mat(angle_rad_tens, self.datatype, self.used_device)
+        S = scale_mat(x_scale_tens, y_scale_tens, self.datatype, self.used_device)
+        SH = shear_mat(x_shear_tens, y_shear_tens, self.datatype, self.used_device)
         t_mats = T @ R @ S @ SH
         t_mats = t_mats[:, 0:2, :]
         # grid = F.affine_grid(t_mats, [self.batch_size, 1, self.height, self.width])
@@ -101,8 +104,11 @@ class SampleCreator:
     def gen_rand_yscales(self, min_scale=0.75, max_scale=1.25):
         self.y_scales = np.random.uniform(min_scale, max_scale, self.batch_size)
 
-    def gen_rand_shear(self, min_shear=-0.1, max_shear=0.1):
-        self.shears = np.random.uniform(min_shear, max_shear, self.batch_size)
+    def gen_rand_xshear(self, min_shear=-0.1, max_shear=0.1):
+        self.x_shears = np.random.uniform(min_shear, max_shear, self.batch_size)
+
+    def gen_rand_yshear(self, min_shear=-0.1, max_shear=0.1):
+        self.y_shears = np.random.uniform(min_shear, max_shear, self.batch_size)
 
     def clear_xshifts(self):
         self.x_shifts = np.zeros(self.batch_size)
@@ -119,8 +125,11 @@ class SampleCreator:
     def clear_yscales(self):
         self.y_scales = np.ones(self.batch_size)
 
-    def clear_shear(self):
-        self.shears = np.zeros(self.batch_size)
+    def clear_xshear(self):
+        self.x_shears = np.zeros(self.batch_size)
+
+    def clear_yshear(self):
+        self.y_shears = np.zeros(self.batch_size)
 
     def gen_rand_transf_params(self):
         self.gen_rand_xshifts()
@@ -133,4 +142,5 @@ class SampleCreator:
         self.clear_rotations()
         self.clear_xscales()
         self.clear_yscales()
-        self.clear_shear()
+        self.clear_xshear()
+        self.clear_yshear()
