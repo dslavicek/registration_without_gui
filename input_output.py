@@ -69,12 +69,12 @@ def save_images_from_tensor(tensor, output_folder, filenames=None):
         skimage.io.imsave(os.path.join(output_folder, filenames[i]), tensor[i, :, :, :])
 
 
-def display_nth_image_from_tensor(tensor, n=0):
+def display_nth_image_from_tensor(tensor, n=0, cmap='gray'):
     if tensor.shape[0] < n:
         print("Error: tensor does not have " + str(n) + " images")
         return 1
     tensor_image = tensor[n].permute(1, 2, 0)
-    plt.imshow(tensor_image)
+    plt.imshow(tensor_image, cmap=cmap)
     plt.show()
     return 0
 
