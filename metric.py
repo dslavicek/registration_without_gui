@@ -38,9 +38,3 @@ def tre(t_mat1, t_mat2, points=None):
 
     return euc_dist_avg
 
-# test
-# t_m1 = torch.tensor([[[1, 0, 0.0], [0, 1, 0.0]], [[1, 0, 0.0], [0, 1, 0.0]]])
-# t_m2 = torch.tensor([[[1, 0, 0.1], [0, 1, 0.1]], [[1, 0, 0.0], [0, 1, 0.0]]])
-
-# pdm = tre(t_m1, t_m2)
-# print(pdm)
