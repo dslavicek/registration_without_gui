@@ -12,7 +12,7 @@ def pyramid_registration(ref, sample, max_iters=30, mu=0.02, scale_factors=None,
                          mask_ref=None,
                          mask_sample=None,
                          enable_translation=True, enable_rotation=True,
-                         enable_scaling=True, enable_shear=True, used_device='cpu'):
+                         enable_scaling=True, enable_shear=True, used_device='cpu', loss_fcn='mse'):
     # this function performs registration of two 4D pytorch tensors
     # inputs - reference tensor, tensor of moving images, max. number of iterations, size of registration step,
     # datatype, verbose mode
@@ -23,6 +23,8 @@ def pyramid_registration(ref, sample, max_iters=30, mu=0.02, scale_factors=None,
     channels = ref.shape[1]
     height = ref.shape[2]
     width = ref.shape[3]
+
+    assert loss_fcn in ['cov', 'mse'], f"Error: Unknown loss function '{loss_fcn}'. Use 'mse'(default) or 'cov'."
 
     if mask_ref is None:
         mask_ref = torch.ones(ref.shape, dtype=datatype, device=used_device)
@@ -76,7 +78,8 @@ def pyramid_registration(ref, sample, max_iters=30, mu=0.02, scale_factors=None,
         sample_rescaled = rescale_images(sample, sf)
         mask_ref_rescaled = rescale_images(mask_ref, sf)
         mask_sample_rescaled = rescale_images(mask_sample, sf)
-        print(f"Scale factor: {sf}")
+        if verbose:
+            print(f"Scale factor: {sf}")
         losses = []
         for i in range(max_iters):
             t_mat = I.clone()
@@ -103,11 +106,10 @@ def pyramid_registration(ref, sample, max_iters=30, mu=0.02, scale_factors=None,
                                                    align_corners=False)
 
             # calculate loss function
-            diff = (registered_tens - ref_rescaled) ** 2
-            # diff = diff * mask_sample_transf * mask_ref_rescaled
-            diff = diff * mask_sample_transf
-            # loss = diff.mean()
-            loss = diff.sum() / (mask_sample_transf * mask_ref_rescaled).sum()
+            if loss_fcn == 'mse':
+                loss = mse_with_masks(ref_rescaled, registered_tens, mask_ref_rescaled, mask_sample_transf)
+            if loss_fcn == 'cov':
+                loss = -covariance(ref_rescaled, registered_tens, mask_ref_rescaled, mask_sample_transf)
 
             losses.append(loss.detach().cpu().numpy())
 
@@ -121,7 +123,7 @@ def pyramid_registration(ref, sample, max_iters=30, mu=0.02, scale_factors=None,
 
     if verbose:
         print("Registration complete.")
-        print("batchsize: ", batch_size, "height: ", height, "width: ", width)
+        print("batch size: ", batch_size, "height: ", height, "width: ", width)
 
     output_dict = {
         "x_shifts": x_shift.detach().cpu().numpy(),
@@ -136,3 +138,4 @@ def pyramid_registration(ref, sample, max_iters=30, mu=0.02, scale_factors=None,
         "transformation_matrices": t_mat.detach().cpu()
     }
     return output_dict
+

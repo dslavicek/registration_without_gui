@@ -69,13 +69,14 @@ def save_images_from_tensor(tensor, output_folder, filenames=None):
         skimage.io.imsave(os.path.join(output_folder, filenames[i]), tensor[i, :, :, :])
 
 
-def display_nth_image_from_tensor(tensor, n=0, cmap='gray'):
+def display_nth_image_from_tensor(tensor, n=0, cmap='gray', show=True):
     if tensor.shape[0] < n:
         print("Error: tensor does not have " + str(n) + " images")
         return 1
     tensor_image = tensor[n].permute(1, 2, 0)
     plt.imshow(tensor_image, cmap=cmap)
-    plt.show()
+    if show:
+        plt.show()
     return 0
 
 
@@ -87,3 +88,28 @@ def make_csv_from_reg_dict(registration_dict, output_path):
     data = np.transpose(data)
     result = pd.DataFrame(data)
     result.to_csv(output_path, header=["x shift", "y shift", "angle deg"], index=False)
+
+
+def from_list_of_files_to_tensor(paths, datatype=torch.float32):
+    im = skimage.io.imread(paths[0])
+    height = im.shape[0]
+    width = im.shape[1]
+    batch_size = len(paths)
+    grayscale = len(im.shape) == 2
+    if grayscale:
+        channels = 1
+    else:
+        channels = 3
+    output_tensor = torch.empty(batch_size, channels, height, width)
+    for i, path in enumerate(paths):
+        im = skimage.io.imread(path)
+        im_tensor = torch.tensor(im, dtype=datatype) / 255
+
+        if grayscale:
+            im_tensor = im_tensor.reshape((1, 1, height, width))
+        else:
+            im_tensor = im_tensor.permute(2, 0, 1)
+            im_tensor = im_tensor.reshape((1, im.shape[2], height, width))
+        output_tensor[i, :, :, :] = im_tensor
+
+    return output_tensor
