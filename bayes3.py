@@ -16,9 +16,9 @@ def bayes(data_dir, gt_dir, output_dir, pbounds={}, n_iter=3, init_points=3, inn
     )
     optimizer.maximize(n_iter=n_iter, init_points=init_points)
     with open(os.path.join(output_dir, 'bayes_result.txt'), 'w') as f:
-        f.write(optimizer.max)
+        f.write(str(optimizer.max))
         f.write(' ')
-        f.write(optimizer.res)
+        f.write(str(optimizer.res))
     print(optimizer.max)
 
 
