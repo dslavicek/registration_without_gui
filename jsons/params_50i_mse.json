@@ -1,0 +1,14 @@
+{
+  "pbounds": {
+    "mu": [
+      0.001,
+      0.01
+    ]
+  },
+  "n_iter": 4,
+  "init_points": 3,
+  "inner_params": {
+    "max_iters": 50,
+    "loss_fcn": "mse"
+  }
+}

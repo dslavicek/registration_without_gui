@@ -34,7 +34,8 @@ def pyramid_registration(ref, sample, max_iters=30, mu=0.02, scale_factors=None,
         mask_sample = torch.ones(sample.shape, dtype=datatype, device=used_device)
     elif len(mask_sample.shape) == 2:
         mask_sample = torch.tensor(mask_sample, dtype=datatype).unsqueeze(0).unsqueeze(0).repeat(batch_size, channels, 1, 1).to(used_device)
-        print(f"Reshaped sample mask, shape: {mask_sample.shape}")
+        if verbose:
+            print(f"Reshaped sample mask, shape: {mask_sample.shape}")
 
     if scale_factors is None:
         scale_factors = [0.125, 0.25, 0.5, 1]

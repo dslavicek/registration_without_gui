@@ -15,8 +15,8 @@ def get_mean_distance(points1, points2):
 
 
 def register_batches_and_evaluate(input_dir, ground_truth_dir, output_dir='.', max_iters=30, mu=0.02, batch_size=8,
-        mats_name="transformation_matrices.pt", fig_name='accuracy_graph.png', loss='mse', verbose=False):
-    transf_mats = register_batches(input_dir, max_iters=max_iters, mu=mu, batch_size=batch_size, loss=loss, verbose=verbose)
+        mats_name="transformation_matrices.pt", fig_name='accuracy_graph.png', loss_fcn='mse', verbose=False):
+    transf_mats = register_batches(input_dir, max_iters=max_iters, mu=mu, batch_size=batch_size, loss_fcn=loss_fcn)
     if mats_name is not None:
         torch.save(transf_mats, os.path.join(output_dir, mats_name))
     ground_truth_files = listdir(ground_truth_dir)
@@ -45,7 +45,8 @@ def register_batches_and_evaluate(input_dir, ground_truth_dir, output_dir='.', m
     accuracies = []
     for tolerance in range(26):
         accuracies.append(len(error_tens[error_tens < tolerance]) / len_total)
-    print(f"AUC: {torch.tensor(accuracies).mean()}")
+    if verbose:
+        print(f"AUC: {torch.tensor(accuracies).mean()}")
     if fig_name is not None:
         plt.plot(accuracies)
         plt.xlabel('tolerance [px]')
@@ -53,6 +54,3 @@ def register_batches_and_evaluate(input_dir, ground_truth_dir, output_dir='.', m
         plt.title(f"AUC: {torch.tensor(accuracies).mean()}")
         plt.savefig(os.path.join(output_dir, fig_name))
     return torch.tensor(accuracies).mean()
-
-
-register_batches_and_evaluate("../data/FIRE/FIRE/part_a", "../data/FIRE/FIRE/gt_p", "../results", verbose=True, batch_size=2)

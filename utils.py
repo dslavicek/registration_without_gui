@@ -173,9 +173,6 @@ def from_image_to_tensor(path, datatype=torch.float32):
     return im_tensor
 
 
-
-
-
 def mse_with_masks(ims1, ims2, masks1, masks2):
     diff = (ims1 - ims2) ** 2
     diff = diff * masks1 * masks2
@@ -188,6 +185,13 @@ def covariance(ims1, ims2, masks1, masks2):
     avg2 = (ims2 * masks2).mean(dim=(2, 3)) / masks2.mean(dim=(2, 3))
     cov = ((ims1 - avg1[:, :, None, None])*(ims2 - avg2[:, :, None, None])).mean()
     return cov
+
+
+def load_masks(mask_dir, ref_mask_name='mask.png', sam_mask_name='feature_mask.png'):
+    ref_mask_np = skimage.io.imread(os.path.join(mask_dir, ref_mask_name))
+    sam_mask_np = skimage.io.imread(os.path.join(mask_dir, sam_mask_name))
+    return ref_mask_np, sam_mask_np
+
 
 # def covariance(ims1, ims2, masks1, masks2):
 #     pcov_sum = 0  # var for acumulating covariances from color channels
