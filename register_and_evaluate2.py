@@ -55,4 +55,4 @@ def register_batches_and_evaluate(input_dir, ground_truth_dir, output_dir='.', p
     return torch.tensor(accuracies).mean()
 
 
-register_batches_and_evaluate("../data/FIRE/FIRE/part_a", "../data/FIRE/FIRE/gt_p", "../results", verbose=True, batch_size=2)
+register_batches_and_evaluate("../data/FIRE/FIRE/part_a", "../data/FIRE/FIRE/gt_a", "../results", verbose=True, batch_size=2)

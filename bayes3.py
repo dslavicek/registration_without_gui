@@ -9,7 +9,7 @@ output_dir = sys.argv[3]
 param_file = sys.argv[4]
 
 
-def bayes(data_dir, gt_dir, output_dir, pbounds={}, n_iter=3, init_points=3, inner_params={}, loss_fcn='mse'):
+def bayes(data_dir, gt_dir, output_dir, pbounds={}, n_iter=3, init_points=3, inner_params={}):
     optimizer = BayesianOptimization(
         f=lambda mu: register_batches_and_evaluate(data_dir, gt_dir, output_dir=output_dir, mu=mu, **inner_params),
         pbounds=pbounds,

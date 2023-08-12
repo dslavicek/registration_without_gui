@@ -1,6 +1,6 @@
 import json, os.path
 
-base_dir = "jsons"
+base_dir = "jsons2"
 for n_iters in [30, 50]:
     for loss_fcn in ['mse', 'cov']:
         inner_params = {
@@ -9,8 +9,8 @@ for n_iters in [30, 50]:
             # 'mu': 0.00475
         }
         bayes_params = {
-            'pbounds': {'mu': (0.001, 0.01)} if loss_fcn == 'mse' else {'mu': (0.0002, 0.01)},
-            'n_iter': 4,
+            'pbounds': {'mu': (0.00075, 0.025)} if loss_fcn == 'mse' else {'mu': (0.00002, 0.001)},
+            'n_iter': 3,
             'init_points': 3,
             'inner_params': inner_params
         }
